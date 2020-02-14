@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.sample.service.impl.SampleMapper">
+
+	<resultMap id="sample" type="egovframework.example.sample.service.SampleVO">
+		<result property="itemId" column="item_id"/>
+		<result property="itemName" column="item_name"/>
+		<result property="dealDate" column="deal_date"/>
+		<result property="priceOpen" column="price_open"/>
+		<result property="priceHigh" column="price_high"/>
+		<result property="priceLow" column="price_low"/>
+		<result property="priceClose" column="price_close"/>
+		<result property="priceAvg5" column="price_avg5"/>
+		<result property="priceAvg10" column="price_avg10"/>
+		<result property="priceAvg20" column="price_avg20"/>
+		<result property="priceAvg60" column="price_avg60"/>
+		<result property="priceAvg120" column="price_avg_120"/>
+		<result property="volume" column="volume"/>
+		<result property="volumeAvg5" column="volume_avg5"/>
+		<result property="volumeAvg20" column="volume_avg20"/>
+		<result property="volumeAvg60" column="volume_avg60"/>
+		<result property="volumeAvg120" column="volume_avg120"/>
+	</resultMap>
+
+	<insert id="insertSample" parameterType="SampleVO">
+
+			INSERT INTO SAMPLE
+				( ID
+				  , NAME
+				  , DESCRIPTION
+				  , USE_YN
+				  , REG_USER )
+			VALUES ( #{id}
+				  , #{name}
+				  , #{description}
+				  , #{useYn}
+				  , #{regUser} )
+
+	</insert>
+
+	<update id="updateSample">
+
+			UPDATE SAMPLE
+			SET ID=#{id}
+				, NAME=#{name}
+				, DESCRIPTION=#{description}
+				, USE_YN=#{useYn}
+				  WHERE ID=#{id}
+
+	</update>
+
+	<delete id="deleteSample">
+
+			DELETE FROM SAMPLE
+			WHERE ID=#{id}
+
+	</delete>
+
+	<select id="selectSample" resultMap="sample">
+
+			SELECT item_id, item_name
+			FROM stock.item
+			WHERE item_id=#{itemId}
+
+
+	</select>
+
+	<select id="selectSampleList" parameterType="searchVO" resultMap="sample">
+		
+			select a.item_id
+				   , b.item_name
+				   , deal_date
+				   , price_open
+				   , price_high
+				   , price_low
+				   , price_close
+				   , volume
+			       , price_close - pc as cpc
+			       , (price_close - pc) / pc * 100 as cpcp
+			       , agoD
+			from (
+					select item_id
+						   , deal_date
+						   , price_open
+						   , price_high
+						   , price_low
+						   , price_close
+						   , volume
+						   , lag(price_close, 1) over(partition by item_id order by deal_date) as pc
+						   , lag(deal_date, 1) over(partition by item_id order by deal_date) as agoD
+					from item_price
+					where 1=1
+							 and deal_date between str_to_date(#{searchDate}, '%Y%m%d') - interval 7 day and #{searchDate}
+				) as a
+			inner join stock.item b on a.item_id = b.item_id
+			where a.deal_date = #{searchDate}
+					<if test="searchKeyword != null and searchKeyword != ''">
+				        <choose>
+		  					<when test="searchCondition == 0">
+								and ( b.item_name like concat('%', #{searchKeyword}, '%') or b.item_id like concat('%', #{searchKeyword}, '%') )
+							</when>
+						</choose>
+					</if>
+			order by a.item_id asc
+			limit #{recordCountPerPage}	offset #{firstIndex}
+
+
+	</select>
+
+	<select id="selectSampleListTotCnt" parameterType="searchVO" resultType="int">
+
+			SELECT COUNT(a.item_id)
+			FROM stock.item a
+			INNER JOIN stock.item_price b on a.item_id = b.item_id
+			WHERE 1=1
+			<if test="searchDate != null and searchDate !=''">
+				AND b.deal_date = #{searchDate}
+			</if>		    
+			<if test="searchKeyword != null and searchKeyword != ''">
+		        <choose>
+  					<when test="searchCondition == 0">
+						AND	( a.item_name LIKE concat('%', #{searchKeyword}, '%') or a.item_id LIKE concat('%', #{searchKeyword}, '%') )
+					</when>
+				</choose>
+			</if>
+	</select>
+	
+	
+	<select id="selectSampleListAgo" parameterType="searchVO" resultType="egovMap">
+
+			SELECT a.item_id
+					   	, a.item_name 
+				       	, b.deal_date
+				       	, b.price_open
+				       	, b.price_high
+				       	, b.price_low
+				       	, b.price_close
+				       	, b.price_avg5
+				       	, b.price_avg10
+				       	, b.price_avg20
+				       	, b.price_avg60
+				       	, b.price_avg_120
+				       	, b.volume
+				       	, b.volume_avg5
+				       	, b.volume_avg20
+				       	, b.volume_avg60
+				       	, b.volume_avg120
+			FROM stock.item a
+			INNER JOIN stock.item_price b on a.item_id = b.item_id
+			
+			WHERE 1=1
+			<if test="searchDate != null and searchDate !=''">
+				AND str_to_date(b.deal_date, '%Y%m%d') = #{searchDate} - INTERVAL #{agoDate} DAY
+			</if>		  
+			<if test="searchKeyword != null and searchKeyword != ''">
+		        <choose>
+		            <when test="searchCondition == 0">
+						AND	( a.item_name LIKE concat('%', #{searchKeyword}, '%') or a.item_id LIKE concat('%', #{searchKeyword}, '%') )
+					</when>
+				</choose>
+			</if>
+ 
+			ORDER BY a.item_id asc    
+			LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectChartList" parameterType="searchVO" resultType="egovMap">
+	
+			select a.item_id
+				   , b.item_name
+				   , deal_date
+				   , price_open
+				   , price_high
+				   , price_low
+				   , price_close
+				   , price_avg5
+				   , price_avg10
+				   , price_avg20
+				   , price_avg60
+				   , price_avg_120
+				   , volume
+				   , volume_avg5
+				   , volume_avg20
+				   , volume_avg60
+				   , volume_avg120
+				   , year
+				   , month
+				   , day
+			from (
+					select item_id
+						   , deal_date
+						   , price_open
+						   , price_high
+						   , price_low
+						   , price_close
+						   , price_avg5
+						   , price_avg10
+						   , price_avg20
+						   , price_avg60
+						   , price_avg_120
+						   , volume
+						   , volume_avg5
+						   , volume_avg20
+						   , volume_avg60
+						   , volume_avg120
+						   , date_format(deal_date, '%Y') as year
+						   , date_format(deal_date, '%m') as month
+						   , date_format(deal_date, '%d') as day
+			               , date_format(deal_date, '%u') as week
+				           , weekday(deal_date) as wd
+				           , rank() over(partition by week order by wd desc) as wdr
+						   , rank() over(partition by month order by day desc) as dr
+					from item_price
+					where 1=1
+							 and deal_date between str_to_date(#{searchDate}, '%Y%m%d') - interval 3 month and #{searchDate}
+				) as a
+			inner join stock.item b on a.item_id = b.item_id
+			where 1=1
+					 and a.item_id = #{chartId}
+					    <if test="vol != null and vol != ''">
+					        <choose>
+					            <when test="vol == 1">
+									and wdr = 1
+								</when>
+							</choose>
+							 <choose>
+					            <when test="vol == 2">
+									and dr = 1
+								</when>
+							</choose>
+						</if>
+			order by year, month, day asc
+	
+	</select>
+	
+	<select id="selectMinPriceLow" parameterType="searchVO" resultType="int">
+
+			SELECT min(price_low)
+			FROM stock.item_price
+			WHERE 1=1
+					    AND item_id = #{chartId}
+					    AND deal_date between str_to_date(#{searchDate}, '%Y%m%d') - interval 3 month and #{searchDate}
+
+	</select>
+	
+	<select id="selectMinPriceAvg" parameterType="searchVO" resultType="int">
+
+			SELECT min(price_avg60)
+			FROM stock.item_price
+			WHERE 1=1
+					    AND item_id = #{chartId}
+					    AND deal_date between str_to_date(#{searchDate}, '%Y%m%d') - interval 3 month and #{searchDate}
+
+	</select>
+</mapper>
