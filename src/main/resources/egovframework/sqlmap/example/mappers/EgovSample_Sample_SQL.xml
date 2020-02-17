@@ -166,71 +166,21 @@
 
 	<select id="selectChartList" parameterType="searchVO" resultType="egovMap">
 	
-			select a.item_id
-				   , b.item_name
-				   , deal_date
-				   , price_open
-				   , price_high
-				   , price_low
-				   , price_close
-				   , price_avg5
-				   , price_avg10
-				   , price_avg20
-				   , price_avg60
-				   , price_avg_120
-				   , volume
-				   , volume_avg5
-				   , volume_avg20
-				   , volume_avg60
-				   , volume_avg120
-				   , year
-				   , month
-				   , day
-			from (
-					select item_id
-						   , deal_date
-						   , price_open
-						   , price_high
-						   , price_low
-						   , price_close
-						   , price_avg5
-						   , price_avg10
-						   , price_avg20
-						   , price_avg60
-						   , price_avg_120
-						   , volume
-						   , volume_avg5
-						   , volume_avg20
-						   , volume_avg60
-						   , volume_avg120
-						   , date_format(deal_date, '%Y') as year
-						   , date_format(deal_date, '%m') as month
-						   , date_format(deal_date, '%d') as day
-			               , date_format(deal_date, '%u') as week
-				           , weekday(deal_date) as wd
-				           , rank() over(partition by week order by wd desc) as wdr
-						   , rank() over(partition by month order by day desc) as dr
-					from item_price
-					where 1=1
-							 and deal_date between str_to_date(#{searchDate}, '%Y%m%d') - interval 3 month and #{searchDate}
-				) as a
-			inner join stock.item b on a.item_id = b.item_id
+			select  date_format(deal_date, '%Y-%m-%d') as dealDate
+					, format(price_close, 0) as priceClose
+					, format(avg(price_close) over(order by deal_date desc rows between 0 preceding and 4 following), 2) as pcAvg5
+					, format(avg(price_close) over(order by deal_date desc rows between 0 preceding and 9 following), 2) as pcAvg10
+			        , format(avg(price_close) over(order by deal_date desc rows between 0 preceding and 19 following), 2) as pcAvg20
+			        , format(avg(price_close) over(order by deal_date desc rows between 0 preceding and 59 following), 2) as pcAvg60
+			        , format(volume, 0) as volume
+			        , format(avg(volume) over(order by deal_date desc rows between 0 preceding and 4 following), 2) as volAvg5
+			        , format(avg(volume) over(order by deal_date desc rows between 0 preceding and 19 following), 2) as volAvg20
+			        , format(avg(volume) over(order by deal_date desc rows between 0 preceding and 59 following), 2) as volAvg60
+			from item_price
 			where 1=1
-					 and a.item_id = #{chartId}
-					    <if test="vol != null and vol != ''">
-					        <choose>
-					            <when test="vol == 1">
-									and wdr = 1
-								</when>
-							</choose>
-							 <choose>
-					            <when test="vol == 2">
-									and dr = 1
-								</when>
-							</choose>
-						</if>
-			order by year, month, day asc
-	
+					 and item_id = #{chartId}
+					 and deal_date between str_to_date(#{searchDate}, '%Y%m%d') - interval 1 year and #{searchDate}
+			limit 10
 	</select>
 	
 	<select id="selectMinPriceLow" parameterType="searchVO" resultType="int">

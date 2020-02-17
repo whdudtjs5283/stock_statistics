@@ -97,139 +97,42 @@
     				 }
     				 , success : function(result){
     					 console.log("id : " + itemId, searchDate);
-    					 drawTrendlines(result, stockName);
-    					 drawVisualization(result);
+    					 table(result, stockName);
     					 $(".dis_none").removeClass();
-    					 //$("#radio1").prop("checked", true);
-    					 
     				 }
     		});
         }
         
-        google.charts.load('current', {packages: ['corechart', 'line']});
-        //google.charts.setOnLoadCallback(drawTrendlines);
-        google.charts.load('current', {'packages':['corechart']});
-       
+        function table(result,stockName) {
+        	
+       	    var chartData = result['chartList'];
+	          
+        	console.log("cn : " + stockName);
 
-        function drawTrendlines(result, stockName) {
-              var data = new google.visualization.DataTable();
-                data.addColumn('string' , '날짜');
-				data.addColumn('number'   , '종가');
-				data.addColumn('number'   , '1주');
-				data.addColumn('number'   , '2주');
-				data.addColumn('number'   , '1개월');
-				data.addColumn('number'   , '3개월');
-				data.addColumn('number'   , '6개월');
-				
-				 var dataRow = [];
-		          
-		          var chartData = result['chartList'];
-		          
-		        	console.log("cn : " + stockName);
-
-		      	 
-		     	 for(var i = 0; i < chartData.length; i++) {
-		    		 var year = chartData[i].year;
-		    		 var month = chartData[i].month;
-		    		 var day = chartData[i].day;
-		    		 var dealDate = chartData[i].dealDate;
-		    		 var priceClose = chartData[i].priceClose;
-		    		 var priceAvg5 = chartData[i].priceAvg5;
-		    		 var priceAvg10 = chartData[i].priceAvg10;
-		    		 var priceAvg20 = chartData[i].priceAvg20;
-		    		 var priceAvg60 = chartData[i].priceAvg60;
-		    		 var priceAvg120 = chartData[i].priceAvg120;
-		    		 
-		    		 //console.log("거래일 : " + year + "년" + month + "월" + day + "일");
-		    		 
-		    		 dataRow =  [
-		    			dealDate
-			    		 , priceClose
-			    		 , priceAvg5
-			    		 , priceAvg10
-			    		 , priceAvg20
-			    		 , priceAvg60
-			    		 , priceAvg120
-		    		 ];
-		    		 data.addRow(dataRow);
-		    	 } 
-		     	 
-		     	  //날짜형식 변경하고 싶으시면 이 부분 수정하세요.
-			        var chartDateformat 	= 'yyyy년MM월dd일';
-			        //라인차트의 라인 수
-			        var chartLineCount    = 10;
-			        //컨트롤러 바 차트의 라인 수
-			        var controlLineCount	= 10;
-			        
-
-              var options = {
-      		  	title : stockName,
-                hAxis: {format: chartDateformat, gridlines:{count:chartLineCount,units: {
-                      years : {format: ['yyyy년']},
-                      months: {format: ['MM월']},
-                      days  : {format: ['dd일']}}
-                  }
-                },
-                vAxis: {
-
-                },
-               
-                legend : {
-        			position : 'right'
-        		}
-              };
-
-              var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-              chart.draw(data, options);
-            }
+	     
+        	 var rowItem = $('#pct').html("");
+   	     	 for(var i = 0; i < chartData.length; i++) {
+   	     		rowItem = "<tr>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].dealDate + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].priceClose + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg5 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" +  chartData[i].pcAvg10 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg20 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg60 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].volume + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg5 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg20 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg60 + "</td>"
+        		rowItem += "</tr>"
+            		$('#pct').append(rowItem);
+        		
+   	     	 }
+   	      
+        		
+        }
         
-        function drawVisualization(result) {
-        	  var data = new google.visualization.DataTable();
-              	 data.addColumn('string' , '날짜');
-				 data.addColumn('number'   , '거래량');				
-				 data.addColumn('number'   , '3개월');
-	
-				
-				 var dataRow = [];
-		          
-		          var chartData = result['chartList'];
-		          
-		         
-		      	 
-		     	 for(var i = 0; i < chartData.length; i++) {
-		    		 var year = chartData[i].year;
-		    		 var month = chartData[i].month;
-		    		 var day = chartData[i].day;
-		    		 var dealDate = chartData[i].dealDate;
-		    		 var volume = chartData[i].volume;
-		    		 var volumeAvg60 = chartData[i].volumeAvg60;
-
-		    		 dataRow =  [
-		    			 dealDate
-			    		 , volume
-			    		 , volumeAvg60
-		    		 ];
-		    		 data.addRow(dataRow);
-		    	 } 
-		     	 
-		     	  //날짜형식 변경하고 싶으시면 이 부분 수정하세요.
-			        var chartDateformat 	= 'yyyy년MM월dd일';
-			        //라인차트의 라인 수
-			        var chartLineCount    = 10;
-			        //컨트롤러 바 차트의 라인 수
-			        var controlLineCount	= 10;
-
-            
-
-            var options = {
-              title : '거래량',
-              seriesType: 'bars',
-              series: {1: {type: 'line'}}        };
-
-            var chart = new google.visualization.ComboChart(document.getElementById('chart_div2'));
-            chart.draw(data, options);
-          }
         
+     
         /* 글 등록 화면 function */
         function fn_egov_addView() {
            	document.listForm.action = "<c:url value='/addSample.do'/>";
@@ -383,21 +286,35 @@
         	<div id="paging">
         		<ui:pagination paginationInfo = "${paginationInfo}" type="image" jsFunction="fn_egov_link_page" />
         		<form:hidden path="pageIndex" />
-        		<div class="dis_none" style="text-align:left;">
         		
-	        		<input type="hidden" id="radioId"/>
-					<input type="hidden" id="radioSD"/>
-	        		<input type="hidden" id="radioSN"/>
-	        
-	        		
-	        	  <input type="radio" name="volCheck" id="radio1" value="0"/>일
-	        	  <input type="radio" name="volCheck" value="1"/>주
-	        	  <input type="radio" name="volCheck" value="2"/>월
+        		<div class="dis_none" style="text-align:left;">
 
+	        		<input type="text" id="radioSN" style="border:none"/>
+	        
+	        <table width="100%" border="0" cellpadding="0" cellspacing="2" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
+        			<caption style="visibility:hidden">카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블</caption>
+        			<tr>
+        				<!-- <th align="center">No</th> -->
+        				<th align="center" rowspan="2" >거래일</th>
+        				<th align="center" rowspan="2" >종가</th>
+        				<th align="center" colspan="4">가격이동평균</th>
+        				<th align="center" rowspan="2">거래량</th>
+        				<th align="center" colspan="3">거래이동평균</th>
+        			</tr>
+        			<tr>
+        				<th align="center">5일</th>
+        				<th align="center">10일</th>
+        				<th align="center">20일</th>
+        				<th align="center">60일</th>
+        				<th align="center">5일</th>
+        				<th align="center">20일</th>
+        				<th align="center">60일</th>
+	         		</tr>
+	         		<tbody id="pct">
+	         		</tbody>
+        		</table>
         	  </div>
         	</div>
-        	  <div id="chart_div"></div>
-        	  <div id="chart_div2"></div>
         </div>
         
     </form:form>
