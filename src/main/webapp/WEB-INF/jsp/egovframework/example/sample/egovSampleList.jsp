@@ -41,9 +41,103 @@
 			
 		}
 	</style>
+
+	
+	<script src = "http://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js" defer ></script>
+     <link rel="stylesheet" href="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/> 
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="//code.jquery.com/jquery.min.js"></script>
     <script type="text/javaScript" language="javascript" defer="defer">
+    
+    $(function(){
+    	
+    	var sd = $('#formDate').val();
+    	var pi = $('#pi').val();
+    	console.log("pi : " + pi);
+    	
+    	
+    	$('#myTable').DataTable({
+    		
+    		"language": {
+    	        "emptyTable": "데이터가 없어요.",
+    	        "lengthMenu": "페이지당 _MENU_ 개씩 보기",
+    	        "info": "현재 _START_ - _END_ / _TOTAL_건",
+    	        "infoEmpty": "데이터 없음",
+    	        "infoFiltered": "( _MAX_건의 데이터에서 필터링됨 )",
+    	        "search": "종목코드/명 : ",
+    	        "zeroRecords": "일치하는 데이터가 없어요.",
+    	        "loadingRecords": "로딩중...",
+    	        "processing":     "잠시만 기다려 주세요...",
+    	        "paginate": {
+    	            "next": "다음",
+    	            "previous": "이전"
+    	        }
+    	    },
+    	    ajax: { 
+    			url: "/chart/selectListAjax.do",
+				    dataSrc: 'sampleList' },
+			columns: [
+				 {data : 'itemId'},
+				 {data : 'itemName'},
+				 {data : 'priceOpen'},
+				 {data : 'priceHigh'},
+				 {data : 'priceLow'},
+				 {data : 'priceClose'},
+				 {data : 'cpc',
+					 'render' :  function(data){
+						 if(data > 0) { data = '<span align="right" class="up">' + data + '</span>' }
+						 if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
+						 if(data == 0) { data = data }
+						 	return data;
+						  }
+				 },
+				 {data : 'cpcp',
+					 'render' :  function(data){
+						 if(data > 0) { data = '<span align="right" class="up">' + data + '</span>' }
+						 if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
+						 if(data == 0) { data = data }
+						 	return data;
+						  }
+				 },
+				 {data : 'volume'},
+				 {data : 'agoD'}
+			]
+		  });
+    	
+
+    });
+    
+    function list(result) {
+    	
+    	var sampleData = result['sampleList'];
+    	var searchData = result['searchVO'];
+    	
+    	for(var i = 0; i < sampleData.length; i++){
+    		
+    		rowItem = "<tr>"
+	        		rowItem += "<td align='center' class='listtd'>" + sampleData[i].itemId + "</td>"
+	        		rowItem += "<td align='left' class='listtd'>" + sampleData[i].itemName + "</td>"
+	        		rowItem += "<td align='right' class='listtd'>" + sampleData[i].priceOpen + "</td>"
+	        		rowItem += "<td align='right' class='listtd'>" + sampleData[i].priceHigh + "</td>"
+	        		rowItem += "<td align='right' class='listtd'>" + sampleData[i].priceLow + "</td>"
+	        		rowItem += "<td align='right' class='listtd'>" + sampleData[i].priceClose + "</td>"
+         		if(sampleData[i].cpc > 0)
+	        		rowItem += "<td align='right' class='up'>" + sampleData[i].cpc + "</td>"
+        		if(sampleData[i].cpc < 0)
+	        		rowItem += "<td align='right' class='down'>" + sampleData[i].cpc + "</td>"
+        		if(sampleData[i].cpc == 0) 
+       				rowItem += "<td align='right' class='listtd'>" + sampleData[i].cpc + "</td>"
+	        		
+	        		rowItem += "<td align='right' class='listtd'>" + sampleData[i].cpcp + "</td>"
+	        		rowItem += "<td align='right' class='listtd'>" + sampleData[i].volume + "</td>"
+	        		rowItem += "<td align='center' class='listtd'>" + sampleData[i].agoD + "</td>"
+	        		rowItem += "</tr>"
+        		
+           		$('#listTable').append(rowItem);       	
+    			console.log("sampleData : " + sampleData[i].itemId);
+    	}
+
+    }
     
         /* 글 수정 화면 function */
         function fn_egov_select(itemId, searchDate, stockName) {
@@ -58,13 +152,10 @@
         
        	callAjax(itemId, searchDate, stockName, vol);
     	
-
         }
-        
 
         $(function(){
-         		
-         	
+       	
         	 $("input[name=volCheck]").on('click', function(){
           			
         		 	var vol = $(this).val();
@@ -79,10 +170,35 @@
           		console.log("vol : " +  vol);
           		});
          	});
-                  	
+        
+
+     /*              	
         function callAjax(itemId, searchDate, stockName, vol) {
        
+        	var table = $('#myTable').DataTable({
+        		ajax: { 
+        			url: "/chart/selectChartAjax.do",
+        			
+   				    dataSrc: '' },
+    			columns: [
+    				 {data : 'dealDate'},
+    				 {data : 'priceClose'},
+    				 {data : 'pcAvg5'},
+    				 {data : 'pcAvg10'},
+    				 {data : 'pcAvg20'},
+    				 {data : 'pcAvg60'},
+    				 {data : 'volume'},
+    				 {data : 'volAvg5'},
+    				 {data : 'volAvg20'},
+    				 {data : 'volAvg60'}
+    			]
+  		  });
+        } */
+        
+         function callAjax(itemId, searchDate, stockName, vol) {
+            
         	console.log("ajax vol : " + vol);
+        	
     		$.ajax({
     			 type: "POST"
     				 , dataType: "json"
@@ -101,7 +217,8 @@
     					 $(".dis_none").removeClass();
     				 }
     		});
-        }
+        } 
+        
         
         function table(result,stockName) {
         	
@@ -116,7 +233,7 @@
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].dealDate + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].priceClose + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg5 + "</td>"
-        		rowItem += "<td align='center' class='listtd'>" +  chartData[i].pcAvg10 + "</td>"
+        		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg10 + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg20 + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg60 + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].volume + "</td>"
@@ -124,14 +241,10 @@
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg20 + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg60 + "</td>"
         		rowItem += "</tr>"
-            		$('#pct').append(rowItem);
-        		
+            		$('#pct').append(rowItem);       		
    	     	 }
-   	      
-        		
+   	      		
         }
-        
-        
      
         /* 글 등록 화면 function */
         function fn_egov_addView() {
@@ -285,7 +398,28 @@
         	<!-- /List -->
         	<div id="paging">
         		<ui:pagination paginationInfo = "${paginationInfo}" type="image" jsFunction="fn_egov_link_page" />
-        		<form:hidden path="pageIndex" />
+        		<form:hidden id="pi" path="pageIndex" />
+        	</div>
+        	
+        	<table id="myTable" width="100%" border="0" cellpadding="0" cellspacing="0" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
+        			<thead>
+	        			<tr>
+	        				<th align="center">종목코드</th>
+	        				<th align="center">종목명</th>
+	        				<th align="center">시가</th>
+	        				<th align="center">고가</th>
+	        				<th align="center">저가</th>
+	        				<th align="center">종가</th>
+	        				<th align="center">전일대비</th>
+	        				<th align="center">등락률</th>
+	        				<th align="center">거래량</th>
+	        				<th align="center">비교거래일</th>
+		         		</tr>
+        			</thead>
+        			<tbody >
+        			
+        			</tbody>
+        		</table>
         		
         		<div class="dis_none" style="text-align:left;">
 
@@ -313,8 +447,8 @@
 	         		<tbody id="pct">
 	         		</tbody>
         		</table>
+
         	  </div>
-        	</div>
         </div>
         
     </form:form>

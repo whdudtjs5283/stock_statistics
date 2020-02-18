@@ -101,40 +101,12 @@ public class EgovSampleController {
 		searchVO.setFirstIndex(paginationInfo.getFirstRecordIndex());
 		searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
 		searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
-		/*
-		if(searchVO.getSearchUseYn().equals("1")) {
-			paginationInfo.setCurrentPageNo(1);
-			searchVO.setFirstIndex(0);
-			searchVO.setLastIndex(10);
-			System.out.println("★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★");
-		}*/
-		
+
 		List<SampleVO> sampleList = sampleService.selectSampleList(searchVO);
 	
 		model.addAttribute("resultList", sampleList);
-		
-		//List<?> sampleListAgo = sampleService.selectSampleListAgo(searchVO);
 
-	/*	if(sampleList.isEmpty()) {
-			int ad = 1;
-			while(sampleListAgo.isEmpty()) {
-				searchVO.setAgoDate(ad);
-				searchVO.setFirstIndex(0);
-				searchVO.setLastIndex(10);
-				sampleList = sampleService.selectSampleList(searchVO);
-				
-				
-				System.out.println("ad : " + ad);
-				System.out.println("while sampleList : " + sampleList);
-				System.out.println("searchVO : " + searchVO);
-				ad++;
-				if(ad > 10) {
-					break;
-				}
-			}
-		} */
 		
-		//model.addAttribute("resultListAgo", sampleListAgo);
 		model.addAttribute("searchVO", searchVO);
 
 		int totCnt = sampleService.selectSampleListTotCnt(searchVO);
@@ -152,7 +124,42 @@ public class EgovSampleController {
 		
 		return "sample/egovSampleList";
 	}
+	
 
+	@RequestMapping("/selectListAjax.do")
+	@ResponseBody
+	public Map<String, Object> selectListAjax(@ModelAttribute("searchVO") SampleDefaultVO searchVO, SampleVO sampleVO) throws Exception {
+		searchVO.setPageUnit(propertiesService.getInt("pageUnit"));
+		searchVO.setPageSize(propertiesService.getInt("pageSize"));
+		
+		if(searchVO.getSearchDate() == "") {
+			searchVO.setSearchDate("20200131");
+		}
+		
+		System.out.println("○searchUY : " + searchVO.getSearchUseYn());
+		
+		/** pageing setting */
+		PaginationInfo paginationInfo = new PaginationInfo();
+		paginationInfo.setCurrentPageNo(searchVO.getPageIndex());
+		paginationInfo.setRecordCountPerPage(searchVO.getPageUnit());
+		paginationInfo.setPageSize(searchVO.getPageSize());
+
+		searchVO.setFirstIndex(paginationInfo.getFirstRecordIndex());
+		searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
+		searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
+
+		List<SampleVO> sampleList = sampleService.selectSampleList(searchVO);
+		
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("sampleList", sampleList);
+		//map.put("searchVO", searchVO);
+
+		System.out.println("◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆");
+		System.out.println("ajax map : " + map.toString());
+		System.out.println("◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆");
+		return map;
+	}
+	
 	/**
 	 * 글 등록 화면을 조회한다.
 	 * @param searchVO - 목록 조회조건 정보가 담긴 VO
