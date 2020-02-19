@@ -25,6 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title><spring:message code="title.sample" /></title>
+    
     <link type="text/css" rel="stylesheet" href="<c:url value='/css/egovframework/sample.css'/>"/>
 	<style>
 		.up {
@@ -44,19 +45,23 @@
 
 	
 	<script src = "http://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js" defer ></script>
-     <link rel="stylesheet" href="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/> 
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="//code.jquery.com/jquery.min.js"></script>
     <script type="text/javaScript" language="javascript" defer="defer">
     
     $(function(){
     	
+    	
+    	var id = $('stockId').val();
     	var sd = $('#formDate').val();
-    	var pi = $('#pi').val();
-    	console.log("pi : " + pi);
+    	var sn = $('#stockName').val();
+    	console.log("id : " + id);
+    	console.log("sd : " + sd);
+    	console.log("sn : " + sn);
     	
     	
-    	$('#myTable').DataTable({
+    	var table = $('#myTable').DataTable({
     		
     		"language": {
     	        "emptyTable": "데이터가 없어요.",
@@ -73,17 +78,23 @@
     	            "previous": "이전"
     	        }
     	    },
-    	    ajax: { 
-    			url: "/chart/selectListAjax.do",
+    	    ajax: {
+    	    	 type: "POST"
+    			,url: "/chart/selectListAjax.do",
 				    dataSrc: 'sampleList' },
 			columns: [
-				 {data : 'itemId'},
-				 {data : 'itemName'},
-				 {data : 'priceOpen'},
-				 {data : 'priceHigh'},
-				 {data : 'priceLow'},
-				 {data : 'priceClose'},
-				 {data : 'cpc',
+				 {targets: 0, data : 'itemId'},
+				 {targets: 1, data : 'itemName',
+					 'render' : fnGetLinkForDetail },
+				 {targets: 2, data : 'priceOpen',
+					 'render' : function(data){
+						 
+						 return data;
+					 }},
+				 {targets: 3, data : 'priceHigh'},
+				 {targets: 4, data : 'priceLow'},
+				 {targets: 5, data : 'priceClose'},
+				 {targets: 6, data : 'cpc',
 					 'render' :  function(data){
 						 if(data > 0) { data = '<span align="right" class="up">' + data + '</span>' }
 						 if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
@@ -91,7 +102,7 @@
 						 	return data;
 						  }
 				 },
-				 {data : 'cpcp',
+				 {targets: 7, data : 'cpcp',
 					 'render' :  function(data){
 						 if(data > 0) { data = '<span align="right" class="up">' + data + '</span>' }
 						 if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
@@ -99,13 +110,34 @@
 						 	return data;
 						  }
 				 },
-				 {data : 'volume'},
-				 {data : 'agoD'}
+				 {targets: 8, data : 'volume'},
+				 {targets: 9, data : 'agoD'}
 			]
 		  });
     	
-
+    	
+    	// <a href="javascript:fn_egov_select('id', sd, sn)"><c:out value="${result.itemName}"/></a>
     });
+    
+    
+    function fnGetLinkForDetail(data, type, row) {
+    	
+    	console.log(data, type, row)
+    	return false;
+        var stVal = "";
+        if (val){
+            stVal = "<span style="cursor:pointer;cursor:hand" onclick="fnGoUpdate('V', '" + row.id + "')">" + val + "</span>";
+        }
+        return stVal;
+    }
+    
+    function fnGoUpdate(mode,id) {
+        var v_url = "/test/Detail.do?mode=" + mode;
+        if(mode == "V") {
+            v_url += "&id=" + id;
+        }
+        this.location.href = v_url;
+    }
     
     function list(result) {
     	
@@ -142,11 +174,8 @@
         /* 글 수정 화면 function */
         function fn_egov_select(itemId, searchDate, stockName) {
         
-        	$("#radioId").val(itemId);
-        	$("#radioSD").val(searchDate);
-        	$("#radioSN").val(stockName);
-        	
-        	$("#radio1").prop("checked", true);
+        	$("#stockId").val(itemId);
+        	$("#stockName").val(stockName);
         	
         	var vol = 0;
         
@@ -328,7 +357,7 @@
                 </ul>
         	</div>
         	<!-- List -->
-        	총 ${ paginationInfo.totalRecordCount }건
+        	<%-- 총 ${ paginationInfo.totalRecordCount }건
         	<div id="table">
         		<table width="100%" border="0" cellpadding="0" cellspacing="0" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
         			<caption style="visibility:hidden">카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블</caption>
@@ -350,8 +379,8 @@
         			</tr>
         			<c:forEach var="result" items="${resultList}" varStatus="status">
             			<tr>
-            				<%-- <td align="center" class="listtd"><c:out value="${paginationInfo.totalRecordCount+1 - ((searchVO.pageIndex-1) * searchVO.pageSize + status.count)}"/></td> --%>
-            				<%-- <td align="center" class="listtd"><a href="javascript:fn_egov_select('<c:out value="${result.id}"/>')"><c:out value="${result.id}"/></a></td> --%>
+            				<td align="center" class="listtd"><c:out value="${paginationInfo.totalRecordCount+1 - ((searchVO.pageIndex-1) * searchVO.pageSize + status.count)}"/></td>
+            				<td align="center" class="listtd"><a href="javascript:fn_egov_select('<c:out value="${result.id}"/>')"><c:out value="${result.id}"/></a></td>
             				
             				<td align="center" class="listtd"><c:out value="${result.itemId}"/>&nbsp;</td>
             				<td align="left" class="listtd"><a href="javascript:fn_egov_select('<c:out value="${result.itemId}"/>', <c:out value="${searchVO.searchDate}"/>, '<c:out value="${result.itemName}"/>')"><c:out value="${result.itemName}"/></a>&nbsp;</td>
@@ -394,14 +423,14 @@
         					<td align="center" class="listtd" colspan="10">장이 열리는 날이 아니거나 없는 종목입니다.</td>
         				</c:if>
         		</table>
-        	</div>
+        	</div> --%>
         	<!-- /List -->
         	<div id="paging">
         		<ui:pagination paginationInfo = "${paginationInfo}" type="image" jsFunction="fn_egov_link_page" />
-        		<form:hidden id="pi" path="pageIndex" />
+        		<form:hidden path="pageIndex" />
         	</div>
         	
-        	<table id="myTable" width="100%" border="0" cellpadding="0" cellspacing="0" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
+        	<table id="myTable" width="120%" border="0" cellpadding="0" cellspacing="0" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
         			<thead>
 	        			<tr>
 	        				<th align="center">종목코드</th>
@@ -422,8 +451,8 @@
         		</table>
         		
         		<div class="dis_none" style="text-align:left;">
-
-	        		<input type="text" id="radioSN" style="border:none"/>
+					
+	        		<input type="text" id="stockName" style="border:none" readonly="true"/>
 	        
 	        <table width="100%" border="0" cellpadding="0" cellspacing="2" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
         			<caption style="visibility:hidden">카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블</caption>
