@@ -53,14 +53,6 @@
     $(function(){
     	
     	
-    	var id = $('stockId').val();
-    	var sd = $('#formDate').val();
-    	var sn = $('#stockName').val();
-    	console.log("id : " + id);
-    	console.log("sd : " + sd);
-    	console.log("sn : " + sn);
-    	
-    	
     	var table = $('#myTable').DataTable({
     		
     		"language": {
@@ -84,33 +76,14 @@
 				    dataSrc: 'sampleList' },
 			columns: [
 				 {targets: 0, data : 'itemId'},
-				 {targets: 1, data : 'itemName',
-					 'render' : fnGetLinkForDetail },
-				 {targets: 2, data : 'priceOpen',
-					 'render' : function(data){
-						 
-						 return data;
-					 }},
-				 {targets: 3, data : 'priceHigh'},
-				 {targets: 4, data : 'priceLow'},
-				 {targets: 5, data : 'priceClose'},
-				 {targets: 6, data : 'cpc',
-					 'render' :  function(data){
-						 if(data > 0) { data = '<span align="right" class="up">' + data + '</span>' }
-						 if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
-						 if(data == 0) { data = data }
-						 	return data;
-						  }
-				 },
-				 {targets: 7, data : 'cpcp',
-					 'render' :  function(data){
-						 if(data > 0) { data = '<span align="right" class="up">' + data + '</span>' }
-						 if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
-						 if(data == 0) { data = data }
-						 	return data;
-						  }
-				 },
-				 {targets: 8, data : 'volume'},
+				 {targets: 1, data : 'itemName', 'render' : fnGetLinkForDetail},
+				 {targets: 2, data : 'priceOpen', 'render' : comma},
+				 {targets: 3, data : 'priceHigh', 'render' : comma},
+				 {targets: 4, data : 'priceLow', 'render' : comma},
+				 {targets: 5, data : 'priceClose', 'render' : comma},
+				 {targets: 6, data : 'cpc', 'render' : upDownCPC},
+				 {targets: 7, data : 'cpcp', 'render' : upDownCPCP},
+				 {targets: 8, data : 'volume', 'render' : comma},
 				 {targets: 9, data : 'agoD'}
 			]
 		  });
@@ -118,25 +91,68 @@
     	
     	// <a href="javascript:fn_egov_select('id', sd, sn)"><c:out value="${result.itemName}"/></a>
     });
+
     
+    
+/*     function fnGetLinkForDetail(data, type, row) {
+
+    	 $('#myTable tbody').on('click', 'tr', function () {
+	    	 var rowClick = $('#myTable').DataTable().row( this ).data();
+	    	 console.log("rowClick : " + rowClick.itemId);
+	    	// url = '<a href="javascript:fnGoUpdate(' + data + ', ' + rowClick.itemId + ', ' + rowClick.dealDate + rowClick.itemName + ')">' + data + '</a>'
+    	}); 
+  	 
+    	 data = '<a href="javascript:fn_egov_select(' + "'028300'" + ', ' + '20200131' + ', ' + "'에이치엘비'" + ')">' + data + '</a>';
+    	 
+        return data; 
+    } */
+    
+    
+	 //data = '<a href="javascript:fn_egov_select(' + row.itemId + ', ' + row.dealDate + ')">' + data + '</a>'
+ 	  // data = '<span style="cursor:pointer;cursor:hand" onclick="javascript:fn_egov_select(' + "'028300'" + ',' + "20200131" + ', ' + 0000 + ')">' + data + "</span>";
+    
+/*     function fnGoUpdate(data, id ,sd, sn) {
+    	data = '<a href="javascript:fn_egov_select(' + 'id' + ', ' + 'sd' + ', ' + 'sn' + ')">' + data + '</a>';
+    	return data;
+    } */
     
     function fnGetLinkForDetail(data, type, row) {
     	
-    	console.log(data, type, row)
-    	return false;
         var stVal = "";
-        if (val){
-            stVal = "<span style="cursor:pointer;cursor:hand" onclick="fnGoUpdate('V', '" + row.id + "')">" + val + "</span>";
+        if (data){
+        	
+            stVal = '<span style="cursor:pointer;cursor:hand" onclick="fnGoUpdate(' + "'" + row.itemId + "'" + ', ' + row.dealDate + ', ' + "'" +  row.itemName + "'" + ')">' + data + '</span>';
         }
         return stVal;
     }
     
-    function fnGoUpdate(mode,id) {
-        var v_url = "/test/Detail.do?mode=" + mode;
-        if(mode == "V") {
-            v_url += "&id=" + id;
-        }
+    function fnGoUpdate(id, sd, sn) {
+    	console.log("fn id :  " + id);
+    	console.log("fn sd :  " + sd);
+    	
+        var v_url = 'javascript:fn_egov_select(' + "'" + id + "'" + ", " + sd + ', ' + "'" + sn + "'" + ')';
+
         this.location.href = v_url;
+    }
+    
+    function upDownCPC(data, toFormat) {
+    	
+    	 if(data > 0) { data = '<span align="right" class="up">▲' + data + '</span>' }
+		 if(data < 0) { data = '<span align="right" class="down">▼' + Math.abs(data) + '</span>' }
+		 if(data == 0) { data = data }
+		
+		 	return data;
+    }
+    
+    function upDownCPCP(data) {
+		if(data > 0) { data = '<span align="right" class="up">+' + data + '</span>' }
+		if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
+		if(data == 0) { data = data }
+			return data;
+   }
+
+    function comma(toFormat){
+    	return toFormat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
     
     function list(result) {
@@ -188,11 +204,13 @@
         	 $("input[name=volCheck]").on('click', function(){
           			
         		 	var vol = $(this).val();
-            		var itemId = $("#radioId").val();
-	         		var searchDate = $("#radioSD").val();
-	         		var stockName = $("#radioSN").val();
+            		//var itemId = $("#radioId").val();
+	         		//var searchDate = $("#radioSD").val();
+	         		//var stockName = $("#radioSN").val();
 	         		
-	         		console.log("id : " + itemId, "searchDate : " + searchDate)
+	         		console.log("select id : " + itemId);
+	         		console.log("select searchDate : " + searchDate);
+	         		console.log("select stockName : " + stockName);
         
             	callAjax(itemId, searchDate, stockName, vol);
           		
@@ -253,8 +271,6 @@
         	
        	    var chartData = result['chartList'];
 	          
-        	console.log("cn : " + stockName);
-
 	     
         	 var rowItem = $('#pct').html("");
    	     	 for(var i = 0; i < chartData.length; i++) {
@@ -451,10 +467,10 @@
         		</table>
         		
         		<div class="dis_none" style="text-align:left;">
-					
+	       
 	        		<input type="text" id="stockName" style="border:none" readonly="true"/>
 	        
-	        <table width="100%" border="0" cellpadding="0" cellspacing="2" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
+	        <table width="120%" border="0" cellpadding="0" cellspacing="2" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
         			<caption style="visibility:hidden">카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블</caption>
         			<tr>
         				<!-- <th align="center">No</th> -->
