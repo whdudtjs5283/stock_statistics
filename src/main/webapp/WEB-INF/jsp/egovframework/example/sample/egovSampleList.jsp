@@ -52,14 +52,15 @@
     
     $(function(){
     	
+    	var sd = $('#formDate').val();
     	
     	var table = $('#myTable').DataTable({
     		
     		"language": {
-    	        "emptyTable": "데이터가 없어요.",
+    	        "emptyTable": "장이 열리는 날이 아니거나 없는 종목입니다.",
     	        "lengthMenu": "페이지당 _MENU_ 개씩 보기",
     	        "info": "현재 _START_ - _END_ / _TOTAL_건",
-    	        "infoEmpty": "데이터 없음",
+    	        "infoEmpty": "0건",
     	        "infoFiltered": "( _MAX_건의 데이터에서 필터링됨 )",
     	        "search": "종목코드/명 : ",
     	        "zeroRecords": "일치하는 데이터가 없어요.",
@@ -70,13 +71,15 @@
     	            "previous": "이전"
     	        }
     	    },
+    	    lengthMenu: [ 5, 10, 15, 20 ],
+    	    displayLength: 10, 
     	    ajax: {
     	    	 type: "POST"
-    			,url: "/chart/selectListAjax.do",
+    			,url: "/chart/selectListAjax.do?searchDate=" + sd,
 				    dataSrc: 'sampleList' },
 			columns: [
 				 {targets: 0, data : 'itemId'},
-				 {targets: 1, data : 'itemName', 'render' : fnGetLinkForDetail},
+				 {targets: 1, data : 'itemName', 'render' : selectStock},
 				 {targets: 2, data : 'priceOpen', 'render' : comma},
 				 {targets: 3, data : 'priceHigh', 'render' : comma},
 				 {targets: 4, data : 'priceLow', 'render' : comma},
@@ -84,69 +87,30 @@
 				 {targets: 6, data : 'cpc', 'render' : upDownCPC},
 				 {targets: 7, data : 'cpcp', 'render' : upDownCPCP},
 				 {targets: 8, data : 'volume', 'render' : comma},
-				 {targets: 9, data : 'agoD'}
+				 {targets: 9, data : 'agoD' , 'render' : dateFormat}
 			]
 		  });
-    	
-    	
-    	// <a href="javascript:fn_egov_select('id', sd, sn)"><c:out value="${result.itemName}"/></a>
+
     });
 
-    
-    
-/*     function fnGetLinkForDetail(data, type, row) {
-
-    	 $('#myTable tbody').on('click', 'tr', function () {
-	    	 var rowClick = $('#myTable').DataTable().row( this ).data();
-	    	 console.log("rowClick : " + rowClick.itemId);
-	    	// url = '<a href="javascript:fnGoUpdate(' + data + ', ' + rowClick.itemId + ', ' + rowClick.dealDate + rowClick.itemName + ')">' + data + '</a>'
-    	}); 
-  	 
-    	 data = '<a href="javascript:fn_egov_select(' + "'028300'" + ', ' + '20200131' + ', ' + "'에이치엘비'" + ')">' + data + '</a>';
-    	 
-        return data; 
-    } */
-    
-    
-	 //data = '<a href="javascript:fn_egov_select(' + row.itemId + ', ' + row.dealDate + ')">' + data + '</a>'
- 	  // data = '<span style="cursor:pointer;cursor:hand" onclick="javascript:fn_egov_select(' + "'028300'" + ',' + "20200131" + ', ' + 0000 + ')">' + data + "</span>";
-    
-/*     function fnGoUpdate(data, id ,sd, sn) {
-    	data = '<a href="javascript:fn_egov_select(' + 'id' + ', ' + 'sd' + ', ' + 'sn' + ')">' + data + '</a>';
+    function dateFormat(data) {
     	return data;
-    } */
-    
-    function fnGetLinkForDetail(data, type, row) {
-    	
-        var stVal = "";
-        if (data){
-        	
-            stVal = '<span style="cursor:pointer;cursor:hand" onclick="fnGoUpdate(' + "'" + row.itemId + "'" + ', ' + row.dealDate + ', ' + "'" +  row.itemName + "'" + ')">' + data + '</span>';
-        }
-        return stVal;
     }
     
-    function fnGoUpdate(id, sd, sn) {
-    	console.log("fn id :  " + id);
-    	console.log("fn sd :  " + sd);
-    	
-        var v_url = 'javascript:fn_egov_select(' + "'" + id + "'" + ", " + sd + ', ' + "'" + sn + "'" + ')';
-
-        this.location.href = v_url;
+    function selectStock(data, type, row) {
+        return data = '<span style="cursor:pointer;cursor:hand" onclick="javascript:fn_egov_select(' + "'" + row.itemId + "'" + ', ' + row.dealDate + ', ' + "'" +  row.itemName + "'" + ')">' + data + '</span>';
     }
     
     function upDownCPC(data, toFormat) {
-    	
-    	 if(data > 0) { data = '<span align="right" class="up">▲' + data + '</span>' }
-		 if(data < 0) { data = '<span align="right" class="down">▼' + Math.abs(data) + '</span>' }
+    	 if(data > 0) { data = '<span align="right" class="up">▲' + data.toLocaleString() + '</span>' }
+		 if(data < 0) { data = '<span align="right" class="down">▼' + Math.abs(data).toLocaleString() + '</span>' }
 		 if(data == 0) { data = data }
-		
 		 	return data;
     }
     
     function upDownCPCP(data) {
-		if(data > 0) { data = '<span align="right" class="up">+' + data + '</span>' }
-		if(data < 0) { data = '<span align="right" class="down">' + data + '</span>' }
+		if(data > 0) { data = '<span align="right" class="up">+' + data.toFixed(2) + '</span>' }
+		if(data < 0) { data = '<span align="right" class="down">' + data.toFixed(2) + '</span>' }
 		if(data == 0) { data = data }
 			return data;
    }
@@ -189,70 +153,23 @@
     
         /* 글 수정 화면 function */
         function fn_egov_select(itemId, searchDate, stockName) {
-        
-        	$("#stockId").val(itemId);
+       
         	$("#stockName").val(stockName);
         	
         	var vol = 0;
         
-       	callAjax(itemId, searchDate, stockName, vol);
+       	callAjax(itemId, searchDate, stockName);
     	
         }
 
-        $(function(){
-       	
-        	 $("input[name=volCheck]").on('click', function(){
-          			
-        		 	var vol = $(this).val();
-            		//var itemId = $("#radioId").val();
-	         		//var searchDate = $("#radioSD").val();
-	         		//var stockName = $("#radioSN").val();
-	         		
-	         		console.log("select id : " + itemId);
-	         		console.log("select searchDate : " + searchDate);
-	         		console.log("select stockName : " + stockName);
-        
-            	callAjax(itemId, searchDate, stockName, vol);
-          		
-          		console.log("vol : " +  vol);
-          		});
-         	});
-        
+         function callAjax(itemId, searchDate, stockName) {
 
-     /*              	
-        function callAjax(itemId, searchDate, stockName, vol) {
-       
-        	var table = $('#myTable').DataTable({
-        		ajax: { 
-        			url: "/chart/selectChartAjax.do",
-        			
-   				    dataSrc: '' },
-    			columns: [
-    				 {data : 'dealDate'},
-    				 {data : 'priceClose'},
-    				 {data : 'pcAvg5'},
-    				 {data : 'pcAvg10'},
-    				 {data : 'pcAvg20'},
-    				 {data : 'pcAvg60'},
-    				 {data : 'volume'},
-    				 {data : 'volAvg5'},
-    				 {data : 'volAvg20'},
-    				 {data : 'volAvg60'}
-    			]
-  		  });
-        } */
-        
-         function callAjax(itemId, searchDate, stockName, vol) {
-            
-        	console.log("ajax vol : " + vol);
-        	
     		$.ajax({
     			 type: "POST"
     				 , dataType: "json"
     				 , data: {
     					 'chartId' : itemId
     					 , 'searchDate' : searchDate
-    					 , 'vol' : vol
     				 }
     				 , url: "/chart/selectChartAjax.do"
     				 , error : function(error) {
@@ -272,9 +189,9 @@
        	    var chartData = result['chartList'];
 	          
 	     
-        	 var rowItem = $('#pct').html("");
+        	 var rowItem = '';
    	     	 for(var i = 0; i < chartData.length; i++) {
-   	     		rowItem = "<tr>"
+   	     		rowItem += "<tr>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].dealDate + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].priceClose + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].pcAvg5 + "</td>"
@@ -286,8 +203,10 @@
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg20 + "</td>"
         		rowItem += "<td align='center' class='listtd'>" + chartData[i].volAvg60 + "</td>"
         		rowItem += "</tr>"
-            		$('#pct').append(rowItem);       		
+            		      		
    	     	 }
+   	     	$('#pct').html("");
+   	     	$('#pct').append(rowItem); 
    	      		
         }
      
@@ -298,9 +217,7 @@
         }
      
         /* 글 검색 화면 function */
-        function fn_egov_selectList(yn) {
-        	console.log(yn);
-        	document.listForm.pageIndex.value = yn;
+        function fn_egov_selectList() {
         	document.listForm.action = "<c:url value='/egovSampleList.do'/>";
            	document.listForm.submit();
         }
@@ -355,7 +272,7 @@
                        
             					<form:hidden path="searchDate" id="formDate" value="${ secDate }"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     </li>
-        			<li>
+<%--         			<li>
         			    <label for="searchCondition" style="visibility:hidden;"><spring:message code="search.choose" /></label>
         				<form:select path="searchCondition" cssClass="use">
         					<form:option value="0" label="종목코드/명" />
@@ -363,7 +280,7 @@
         			</li>
         			<li><label for="searchKeyword" style="visibility:hidden;display:none;"><spring:message code="search.keyword" /></label>
                         <form:input path="searchKeyword" cssClass="txt" onkeydown="Enter_Check();"/>
-                    </li>
+                    </li> --%>
         			<li>
         	            <span class="btn_blue_l">
         	                <a href="javascript:fn_egov_selectList(1);"><spring:message code="button.search" /></a>
@@ -439,12 +356,13 @@
         					<td align="center" class="listtd" colspan="10">장이 열리는 날이 아니거나 없는 종목입니다.</td>
         				</c:if>
         		</table>
-        	</div> --%>
+        	</div> 
         	<!-- /List -->
         	<div id="paging">
         		<ui:pagination paginationInfo = "${paginationInfo}" type="image" jsFunction="fn_egov_link_page" />
         		<form:hidden path="pageIndex" />
         	</div>
+        	--%>
         	
         	<table id="myTable" width="120%" border="0" cellpadding="0" cellspacing="0" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
         			<thead>

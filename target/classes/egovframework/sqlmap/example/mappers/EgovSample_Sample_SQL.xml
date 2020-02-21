@@ -77,7 +77,7 @@
 				   , volume
 			       , price_close - pc as cpc
 			       , (price_close - pc) / pc * 100 as cpcp
-			       , agoD
+			       , date_format(agoD, '%Y-%m-%d') as agoD
 			from (
 					select item_id
 						   , deal_date
